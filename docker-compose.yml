@@ -8,10 +8,18 @@ services:
       dockerfile: docker/php/Dockerfile
     volumes:
       - ./:/var/www/html
+      - vendor:/var/www/html/vendor
     environment:
       - DB_URI=mongodb://root:pass12345@host.docker.internal:27017/?directConnection=true&tls=false
       - AWS_URL=http://host.docker.internal:9000
       - AWS_ENDPOINT=http://host.docker.internal:9000
+    command: >
+      bash -c "
+      chown -R www-data:www-data storage bootstrap/cache &&
+      php artisan config:clear &&
+      php artisan route:clear &&
+      php artisan key:generate &&
+      php-fpm"
 
   k_web:
     image: nginx:1.20-alpine
@@ -22,3 +30,5 @@ services:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - testing_build_app
+volumes:
+  vendor:

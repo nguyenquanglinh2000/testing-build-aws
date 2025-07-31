@@ -1,8 +1,4 @@
 FROM php:8.3-fpm
-SHELL ["/bin/bash", "-oeux", "pipefail", "-c"]
-
-ENV COMPOSER_ALLOW_SUPERUSER=1 \
-    COMPOSER_HOME=/composer
 
 RUN apt-get update && apt-get install -y \
     libssl-dev \
@@ -11,7 +7,6 @@ RUN apt-get update && apt-get install -y \
     unzip \
     zip \
     git \
-    supervisor \
     libonig-dev \
     libxml2-dev \
     && pecl install mongodb \
@@ -27,16 +22,22 @@ WORKDIR /var/www/html
 
 COPY . .
 
-COPY docker/entrypoint/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN composer install --no-interaction --no-dev --optimize-autoloader
 
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN chown -R www-data:www-data storage bootstrap/cache
+
+RUN chmod -R 775 storage bootstrap/cache
+
+RUN apt-get update && apt-get install -y supervisor
+
+RUN mkdir -p /var/log/supervisor
+RUN chown -R www-data:www-data /var/log/supervisor
+RUN chmod -R 775 /var/log/supervisor
 
 COPY docker/supervisor/supervisord.conf /etc/supervisord.conf
 
 COPY docker/supervisor/*.conf /etc/supervisor/conf.d/
 
 RUN mkdir -p /var/log/supervisor /var/www/html/storage/logs
-
-ENTRYPOINT ["docker-entrypoint.sh"]
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
