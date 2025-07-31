@@ -27,18 +27,16 @@ WORKDIR /var/www/html
 
 COPY . .
 
-RUN [ -f .env ] || cp .env.example .env
+COPY docker/entrypoint/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-RUN composer install --no-interaction --no-dev --optimize-autoloader
-
-RUN chmod -R 777 /var/www/html/storage
-
-RUN php artisan key:generate
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 COPY docker/supervisor/supervisord.conf /etc/supervisord.conf
 
 COPY docker/supervisor/*.conf /etc/supervisor/conf.d/
 
 RUN mkdir -p /var/log/supervisor /var/www/html/storage/logs
+
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]

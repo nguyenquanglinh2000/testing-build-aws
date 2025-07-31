@@ -6,8 +6,8 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
-    # volumes:
-    #   - ./:/var/www/html
+    volumes:
+      - ./:/var/www/html
     environment:
       - DB_URI=mongodb://root:pass12345@host.docker.internal:27017/?directConnection=true&tls=false
       - AWS_URL=http://host.docker.internal:9000
